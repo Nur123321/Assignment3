@@ -1,0 +1,7 @@
+package com.assignment3.exception;
+
+public class DuplicateResourceException extends InvalidInputException {
+    public DuplicateResourceException(String message) {
+        super(message);
+    }
+}
