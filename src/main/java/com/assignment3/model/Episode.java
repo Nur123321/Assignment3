@@ -1,9 +1,9 @@
 package com.assignment3.model;
 
-import com.assignment3.model.contracts.Playable;
+import com.assignment3.interfaces.Playable;
 
 public class Episode extends MediaContent implements Playable {
-    private int seriesId;
+    private final int seriesId;
     private int seasonNumber;
     private int episodeNumber;
     private int durationMinutes;
@@ -17,17 +17,8 @@ public class Episode extends MediaContent implements Playable {
         this.durationMinutes = durationMinutes;
     }
 
-    @Override
-    public String getContentType() {
-        return "Episode";
-    }
-
     public int getSeriesId() {
         return seriesId;
-    }
-
-    public void setSeriesId(int seriesId) {
-        this.seriesId = seriesId;
     }
 
     public int getSeasonNumber() {
@@ -55,7 +46,17 @@ public class Episode extends MediaContent implements Playable {
     }
 
     @Override
-    public String play() {
-        return "Playing episode: " + getTitle();
+    public String getContentType() {
+        return "Episode";
+    }
+
+    @Override
+    public String getSummary() {
+        return getTitle() + " (S" + seasonNumber + "E" + episodeNumber + ")";
+    }
+
+    @Override
+    public void play() {
+        System.out.println("Playing episode: " + getTitle());
     }
 }

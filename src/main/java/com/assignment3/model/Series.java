@@ -1,20 +1,24 @@
 package com.assignment3.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Series extends MediaContent {
-    private int seasons;
     private final List<Episode> episodes = new ArrayList<>();
+    private int seasons;
 
     public Series(int id, String title, String genre, int releaseYear, double rating, int seasons) {
         super(id, title, genre, releaseYear, rating);
         this.seasons = seasons;
     }
 
-    @Override
-    public String getContentType() {
-        return "Series";
+    public List<Episode> getEpisodes() {
+        return Collections.unmodifiableList(episodes);
+    }
+
+    public void addEpisode(Episode episode) {
+        episodes.add(episode);
     }
 
     public int getSeasons() {
@@ -25,13 +29,13 @@ public class Series extends MediaContent {
         this.seasons = seasons;
     }
 
-    public List<Episode> getEpisodes() {
-        return new ArrayList<>(episodes);
+    @Override
+    public String getContentType() {
+        return "Series";
     }
 
-    public void addEpisode(Episode episode) {
-        if (episode != null) {
-            episodes.add(episode);
-        }
+    @Override
+    public String getSummary() {
+        return getTitle() + " (" + seasons + " seasons, " + episodes.size() + " episodes)";
     }
 }

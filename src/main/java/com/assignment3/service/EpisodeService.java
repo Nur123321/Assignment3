@@ -3,76 +3,69 @@ package com.assignment3.service;
 import com.assignment3.exception.InvalidInputException;
 import com.assignment3.exception.ResourceNotFoundException;
 import com.assignment3.model.Episode;
-import com.assignment3.repository.EpisodeRepository;
-import com.assignment3.repository.SeriesRepository;
+import com.assignment3.repository.interfaces.CrudRepository;
+import com.assignment3.utils.SortingUtils;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EpisodeService {
-    private final EpisodeRepository episodeRepository;
-    private final SeriesRepository seriesRepository;
+    private final CrudRepository<Episode, Integer> repository;
 
-    public EpisodeService(EpisodeRepository episodeRepository, SeriesRepository seriesRepository) {
-        this.episodeRepository = episodeRepository;
-        this.seriesRepository = seriesRepository;
+    public EpisodeService(CrudRepository<Episode, Integer> repository) {
+        this.repository = repository;
     }
 
-    public void create(Episode episode) {
-        validateEpisode(episode);
-        episodeRepository.create(episode);
+    public Episode create(Episode episode) {
+        validate(episode);
+        return repository.create(episode);
     }
 
     public Episode getById(int id) {
-        return episodeRepository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Episode not found: " + id));
-    }
-
-    public List<Episode> getBySeriesId(int seriesId) {
-        if (seriesRepository.getById(seriesId).isEmpty()) {
-            throw new ResourceNotFoundException("Series not found: " + seriesId);
-        }
-        return episodeRepository.getBySeriesId(seriesId);
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Episode " + id + " not found"));
     }
 
     public List<Episode> getAll() {
-        return episodeRepository.getAll();
+        return repository.findAll();
     }
 
-    public void update(int id, Episode episode) {
-        validateEpisode(episode);
-        getById(id);
-        episodeRepository.update(id, episode);
+    public List<Episode> getBySeriesId(int seriesId) {
+        return repository.findAll().stream()
+                .filter(episode -> episode.getSeriesId() == seriesId)
+                .collect(Collectors.toList());
+    }
+
+    public List<Episode> getAllSortedByEpisodeNumber() {
+        List<Episode> items = repository.findAll();
+        SortingUtils.sortBy(items, Comparator.comparingInt(Episode::getEpisodeNumber));
+        return items;
+    }
+
+    public Episode update(Episode episode) {
+        validate(episode);
+        return repository.update(episode);
     }
 
     public void delete(int id) {
-        getById(id);
-        episodeRepository.delete(id);
+        repository.deleteById(id);
     }
 
-    private void validateEpisode(Episode episode) {
-        if (episode == null) {
-            throw new InvalidInputException("Episode cannot be null");
-        }
-        if (episode.getTitle() == null || episode.getTitle().isBlank()) {
-            throw new InvalidInputException("Title is required");
-        }
-        if (episode.getSeriesId() <= 0) {
-            throw new InvalidInputException("Series ID is required");
-        }
-        if (seriesRepository.getById(episode.getSeriesId()).isEmpty()) {
-            throw new InvalidInputException("Series must exist before adding episodes");
-        }
-        if (episode.getSeasonNumber() <= 0) {
-            throw new InvalidInputException("Season number must be positive");
-        }
-        if (episode.getEpisodeNumber() <= 0) {
-            throw new InvalidInputException("Episode number must be positive");
-        }
-        if (episode.getDurationMinutes() <= 0) {
-            throw new InvalidInputException("Duration must be greater than 0");
-        }
-        if (episode.getRating() < 0 || episode.getRating() > 10) {
-            throw new InvalidInputException("Rating must be between 0 and 10");
+    private void validate(Episode episode) {
+        try {
+            episode.validate(episode);
+            if (episode.getSeasonNumber() <= 0) {
+                throw new IllegalArgumentException("seasonNumber must be positive");
+            }
+            if (episode.getEpisodeNumber() <= 0) {
+                throw new IllegalArgumentException("episodeNumber must be positive");
+            }
+            if (episode.getDurationMinutes() <= 0) {
+                throw new IllegalArgumentException("durationMinutes must be positive");
+            }
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidInputException(ex.getMessage());
         }
     }
 }

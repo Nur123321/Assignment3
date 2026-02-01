@@ -1,6 +1,6 @@
 package com.assignment3.model;
 
-import com.assignment3.model.contracts.Playable;
+import com.assignment3.interfaces.Playable;
 
 public class Movie extends MediaContent implements Playable {
     private int durationMinutes;
@@ -10,11 +10,6 @@ public class Movie extends MediaContent implements Playable {
         super(id, title, genre, releaseYear, rating);
         this.durationMinutes = durationMinutes;
         this.director = director;
-    }
-
-    @Override
-    public String getContentType() {
-        return "Movie";
     }
 
     public int getDurationMinutes() {
@@ -34,7 +29,17 @@ public class Movie extends MediaContent implements Playable {
     }
 
     @Override
-    public String play() {
-        return "Playing movie: " + getTitle();
+    public String getContentType() {
+        return "Movie";
+    }
+
+    @Override
+    public String getSummary() {
+        return getTitle() + " (" + getReleaseYear() + ")";
+    }
+
+    @Override
+    public void play() {
+        System.out.println("Playing movie: " + getTitle());
     }
 }
