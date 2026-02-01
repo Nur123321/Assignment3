@@ -5,9 +5,9 @@ This project implements a **Movie Streaming Platform** API in Java using a layer
 
 **Entities**:
 - `MediaContent` (abstract base class)
-- `Movie` (extends `MediaContent`)
-- `Series` (extends `MediaContent`)
-- `Episode` (extends `MediaContent`)
+- `Movie` (extends `MediaContent`, includes `durationMinutes` and `director`)
+- `Series` (extends `MediaContent`, includes `seasons`)
+- `Episode` (extends `MediaContent`, includes `seasonNumber`, `episodeNumber`, `durationMinutes`)
 
 **Relationships**:
 - `Series` aggregates a list of `Episode` objects (composition in-memory).

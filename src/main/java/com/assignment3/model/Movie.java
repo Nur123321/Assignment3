@@ -4,10 +4,12 @@ import com.assignment3.interfaces.Playable;
 
 public class Movie extends MediaContent implements Playable {
     private int durationMinutes;
+    private String director;
 
-    public Movie(int id, String title, String genre, int releaseYear, double rating, int durationMinutes) {
+    public Movie(int id, String title, String genre, int releaseYear, double rating, int durationMinutes, String director) {
         super(id, title, genre, releaseYear, rating);
         this.durationMinutes = durationMinutes;
+        this.director = director;
     }
 
     public int getDurationMinutes() {
@@ -16,6 +18,14 @@ public class Movie extends MediaContent implements Playable {
 
     public void setDurationMinutes(int durationMinutes) {
         this.durationMinutes = durationMinutes;
+    }
+
+    public String getDirector() {
+        return director;
+    }
+
+    public void setDirector(String director) {
+        this.director = director;
     }
 
     @Override

@@ -24,17 +24,17 @@ public class MediaController {
     }
 
     public void demoCrudFlow() {
-        Movie movie = new Movie(1, "Nebula Drift", "Sci-Fi", 2021, 8.5, 124);
+        Movie movie = new Movie(1, "Nebula Drift", "Sci-Fi", 2021, 8.5, 124, "Ava Cho");
         movieService.create(movie);
 
-        Series series = new Series(100, "City Lights", "Drama", 2020, 9.1);
+        Series series = new Series(100, "City Lights", "Drama", 2020, 9.1, 3);
         seriesService.create(series);
 
-        Episode episode = new Episode(1001, "Pilot", "Drama", 2020, 8.7, 100, 1);
+        Episode episode = new Episode(1001, "Pilot", "Drama", 2020, 8.7, 100, 1, 1, 52);
         episodeService.create(episode);
         seriesService.addEpisode(series.getId(), episode);
 
-        Movie updated = new Movie(1, "Nebula Drift", "Sci-Fi", 2021, 9.0, 124);
+        Movie updated = new Movie(1, "Nebula Drift", "Sci-Fi", 2021, 9.0, 124, "Ava Cho");
         movieService.update(updated);
 
         movieService.getAllSortedByRatingDesc().forEach(item ->

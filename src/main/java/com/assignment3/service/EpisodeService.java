@@ -55,8 +55,14 @@ public class EpisodeService {
     private void validate(Episode episode) {
         try {
             episode.validate(episode);
+            if (episode.getSeasonNumber() <= 0) {
+                throw new IllegalArgumentException("seasonNumber must be positive");
+            }
             if (episode.getEpisodeNumber() <= 0) {
                 throw new IllegalArgumentException("episodeNumber must be positive");
+            }
+            if (episode.getDurationMinutes() <= 0) {
+                throw new IllegalArgumentException("durationMinutes must be positive");
             }
         } catch (IllegalArgumentException ex) {
             throw new InvalidInputException(ex.getMessage());

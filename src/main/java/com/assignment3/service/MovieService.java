@@ -51,6 +51,9 @@ public class MovieService {
             if (movie.getDurationMinutes() <= 0) {
                 throw new IllegalArgumentException("durationMinutes must be positive");
             }
+            if (movie.getDirector() == null || movie.getDirector().isBlank()) {
+                throw new IllegalArgumentException("director must not be blank");
+            }
         } catch (IllegalArgumentException ex) {
             throw new InvalidInputException(ex.getMessage());
         }

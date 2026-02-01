@@ -55,6 +55,9 @@ public class SeriesService {
     private void validate(Series series) {
         try {
             series.validate(series);
+            if (series.getSeasons() <= 0) {
+                throw new IllegalArgumentException("seasons must be positive");
+            }
         } catch (IllegalArgumentException ex) {
             throw new InvalidInputException(ex.getMessage());
         }

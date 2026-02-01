@@ -6,9 +6,11 @@ import java.util.List;
 
 public class Series extends MediaContent {
     private final List<Episode> episodes = new ArrayList<>();
+    private int seasons;
 
-    public Series(int id, String title, String genre, int releaseYear, double rating) {
+    public Series(int id, String title, String genre, int releaseYear, double rating, int seasons) {
         super(id, title, genre, releaseYear, rating);
+        this.seasons = seasons;
     }
 
     public List<Episode> getEpisodes() {
@@ -19,6 +21,14 @@ public class Series extends MediaContent {
         episodes.add(episode);
     }
 
+    public int getSeasons() {
+        return seasons;
+    }
+
+    public void setSeasons(int seasons) {
+        this.seasons = seasons;
+    }
+
     @Override
     public String getContentType() {
         return "Series";
@@ -26,6 +36,6 @@ public class Series extends MediaContent {
 
     @Override
     public String getSummary() {
-        return getTitle() + " (" + episodes.size() + " episodes)";
+        return getTitle() + " (" + seasons + " seasons, " + episodes.size() + " episodes)";
     }
 }
