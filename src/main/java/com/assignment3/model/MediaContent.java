@@ -1,9 +1,10 @@
 package com.assignment3.model;
 
-import com.assignment3.model.contracts.Rateable;
+import com.assignment3.interfaces.Rateable;
+import com.assignment3.interfaces.Validatable;
 
-public abstract class MediaContent implements Rateable {
-    private int id;
+public abstract class MediaContent implements Rateable, Validatable<MediaContent> {
+    private final int id;
     private String title;
     private String genre;
     private int releaseYear;
@@ -17,14 +18,8 @@ public abstract class MediaContent implements Rateable {
         this.rating = rating;
     }
 
-    public abstract String getContentType();
-
     public int getId() {
         return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     public String getTitle() {
@@ -55,8 +50,19 @@ public abstract class MediaContent implements Rateable {
         return rating;
     }
 
-    @Override
-    public void rate(double rating) {
+    public void setRating(double rating) {
         this.rating = rating;
+    }
+
+    public abstract String getContentType();
+
+    public abstract String getSummary();
+
+    @Override
+    public void validate(MediaContent value) {
+        requireNonBlank(value.title, "title");
+        requireNonBlank(value.genre, "genre");
+        requireInRange(value.rating, 0.0, 10.0, "rating");
+        requireInRange(value.releaseYear, 1900, 2100, "releaseYear");
     }
 }

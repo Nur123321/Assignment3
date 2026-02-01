@@ -1,41 +1,19 @@
 package com.assignment3.model;
 
-import com.assignment3.model.contracts.Playable;
+import com.assignment3.interfaces.Playable;
 
 public class Episode extends MediaContent implements Playable {
-    private int seriesId;
-    private int seasonNumber;
+    private final int seriesId;
     private int episodeNumber;
-    private int durationMinutes;
 
-    public Episode(int id, String title, String genre, int releaseYear, double rating, int seriesId, int seasonNumber,
-                   int episodeNumber, int durationMinutes) {
+    public Episode(int id, String title, String genre, int releaseYear, double rating, int seriesId, int episodeNumber) {
         super(id, title, genre, releaseYear, rating);
         this.seriesId = seriesId;
-        this.seasonNumber = seasonNumber;
         this.episodeNumber = episodeNumber;
-        this.durationMinutes = durationMinutes;
-    }
-
-    @Override
-    public String getContentType() {
-        return "Episode";
     }
 
     public int getSeriesId() {
         return seriesId;
-    }
-
-    public void setSeriesId(int seriesId) {
-        this.seriesId = seriesId;
-    }
-
-    public int getSeasonNumber() {
-        return seasonNumber;
-    }
-
-    public void setSeasonNumber(int seasonNumber) {
-        this.seasonNumber = seasonNumber;
     }
 
     public int getEpisodeNumber() {
@@ -46,16 +24,18 @@ public class Episode extends MediaContent implements Playable {
         this.episodeNumber = episodeNumber;
     }
 
-    public int getDurationMinutes() {
-        return durationMinutes;
-    }
-
-    public void setDurationMinutes(int durationMinutes) {
-        this.durationMinutes = durationMinutes;
+    @Override
+    public String getContentType() {
+        return "Episode";
     }
 
     @Override
-    public String play() {
-        return "Playing episode: " + getTitle();
+    public String getSummary() {
+        return getTitle() + " (E" + episodeNumber + ")";
+    }
+
+    @Override
+    public void play() {
+        System.out.println("Playing episode: " + getTitle());
     }
 }

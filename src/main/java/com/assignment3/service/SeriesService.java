@@ -1,71 +1,62 @@
 package com.assignment3.service;
 
-import com.assignment3.exception.DuplicateResourceException;
 import com.assignment3.exception.InvalidInputException;
 import com.assignment3.exception.ResourceNotFoundException;
+import com.assignment3.model.Episode;
 import com.assignment3.model.Series;
-import com.assignment3.repository.SeriesRepository;
+import com.assignment3.repository.interfaces.CrudRepository;
+import com.assignment3.utils.SortingUtils;
 
+import java.util.Comparator;
 import java.util.List;
 
 public class SeriesService {
-    private final SeriesRepository seriesRepository;
+    private final CrudRepository<Series, Integer> repository;
 
-    public SeriesService(SeriesRepository seriesRepository) {
-        this.seriesRepository = seriesRepository;
+    public SeriesService(CrudRepository<Series, Integer> repository) {
+        this.repository = repository;
     }
 
-    public void create(Series series) {
-        validateSeries(series);
-        seriesRepository.getByTitle(series.getTitle()).ifPresent(existing -> {
-            throw new DuplicateResourceException("Series title already exists: " + series.getTitle());
-        });
-        seriesRepository.create(series);
+    public Series create(Series series) {
+        validate(series);
+        return repository.create(series);
     }
 
     public Series getById(int id) {
-        return seriesRepository.getById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Series not found: " + id));
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Series " + id + " not found"));
     }
 
     public List<Series> getAll() {
-        return seriesRepository.getAll();
+        return repository.findAll();
     }
 
-    public void update(int id, Series series) {
-        validateSeries(series);
-        Series existing = getById(id);
-        if (!existing.getTitle().equalsIgnoreCase(series.getTitle())) {
-            seriesRepository.getByTitle(series.getTitle()).ifPresent(other -> {
-                throw new DuplicateResourceException("Series title already exists: " + series.getTitle());
-            });
-        }
-        seriesRepository.update(id, series);
+    public List<Series> getAllSortedByTitle() {
+        List<Series> items = repository.findAll();
+        SortingUtils.sortBy(items, Comparator.comparing(Series::getTitle));
+        return items;
+    }
+
+    public Series update(Series series) {
+        validate(series);
+        return repository.update(series);
     }
 
     public void delete(int id) {
-        getById(id);
-        seriesRepository.delete(id);
+        repository.deleteById(id);
     }
 
-    private void validateSeries(Series series) {
-        if (series == null) {
-            throw new InvalidInputException("Series cannot be null");
-        }
-        if (series.getTitle() == null || series.getTitle().isBlank()) {
-            throw new InvalidInputException("Title is required");
-        }
-        if (series.getGenre() == null || series.getGenre().isBlank()) {
-            throw new InvalidInputException("Genre is required");
-        }
-        if (series.getReleaseYear() < 1940) {
-            throw new InvalidInputException("Release year must be 1940 or later");
-        }
-        if (series.getRating() < 0 || series.getRating() > 10) {
-            throw new InvalidInputException("Rating must be between 0 and 10");
-        }
-        if (series.getSeasons() <= 0) {
-            throw new InvalidInputException("Series must have at least 1 season");
+    public void addEpisode(int seriesId, Episode episode) {
+        Series series = getById(seriesId);
+        series.addEpisode(episode);
+        repository.update(series);
+    }
+
+    private void validate(Series series) {
+        try {
+            series.validate(series);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidInputException(ex.getMessage());
         }
     }
 }

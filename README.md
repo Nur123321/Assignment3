@@ -1,43 +1,78 @@
-# Movie Streaming Platform (Assignment 3)
+# Movie Streaming Platform — Assignment 4 (SOLID + Advanced OOP)
 
-## A. Project Overview
-This project implements a **Movie Streaming Platform** API using Java, JDBC, and PostgreSQL. It demonstrates OOP (inheritance, interfaces, polymorphism), layered architecture (controller → service → repository), validation, and exception handling.
+## 1) Project Overview
+This project implements a **Movie Streaming Platform** API in Java using a layered architecture (controller → service → repository → data) and demonstrates SOLID principles, advanced OOP features, and JDBC-ready schema design. The domain includes movies, series, and episodes with composition and CRUD workflows.
 
 **Entities**:
-- `MediaContent` (abstract base)
-- `Movie`
-- `Series`
-- `Episode`
+- `MediaContent` (abstract base class)
+- `Movie` (extends `MediaContent`)
+- `Series` (extends `MediaContent`)
+- `Episode` (extends `MediaContent`)
 
-## B. OOP Design Documentation
-### Abstract class and subclasses
-- `MediaContent` defines shared fields (`id`, `title`, `genre`, `releaseYear`, `rating`) and an abstract method `getContentType()`.
-- `Movie`, `Series`, and `Episode` extend `MediaContent` and override `getContentType()`.
+**Relationships**:
+- `Series` aggregates a list of `Episode` objects (composition in-memory).
 
-### Interfaces
-- `Rateable` — implemented by `MediaContent`.
-- `Playable` — implemented by `Movie` and `Episode`.
-
-### Composition / Aggregation
-- `Series` aggregates `Episode` objects (composition-style list) to show related episodes in memory.
-
-### Polymorphism example
-- The controller iterates a list of `MediaContent` and prints `getContentType()` for each item.
-
-### UML (text)
+## 2) Repository Structure
 ```
-MediaContent (abstract)
-  + getContentType(): String
-  + rate(rating)
-   /         |         \
-Movie     Series     Episode
-  |          |           |
-Playable   (has)      Playable
-Rateable            Rateable
+src/main/java/com/assignment3
+├── Main.java
+├── controller/
+│   └── MediaController.java
+├── exception/
+│   ├── DatabaseOperationException.java
+│   ├── DuplicateResourceException.java
+│   ├── InvalidInputException.java
+│   └── ResourceNotFoundException.java
+├── interfaces/
+│   ├── Playable.java
+│   ├── Rateable.java
+│   └── Validatable.java
+├── model/
+│   ├── Episode.java
+│   ├── MediaContent.java
+│   ├── Movie.java
+│   └── Series.java
+├── repository/
+│   └── InMemoryRepository.java
+├── repository/interfaces/
+│   ├── CrudRepository.java
+│   └── IdExtractor.java
+├── service/
+│   ├── EpisodeService.java
+│   ├── MovieService.java
+│   └── SeriesService.java
+└── utils/
+    ├── ReflectionUtils.java
+    └── SortingUtils.java
 ```
 
-## C. Database Description
-**PostgreSQL schema** is located in `src/main/resources/schema.sql` and contains:
+## 3) SOLID Documentation
+**SRP (Single Responsibility)**
+- Controller handles I/O + orchestration only; services handle validation and business rules; repositories handle storage.
+
+**OCP (Open/Closed)**
+- `MediaContent` is open for extension by new content types without changing existing logic.
+
+**LSP (Liskov Substitution)**
+- `Movie`, `Series`, and `Episode` can be used anywhere a `MediaContent` is expected.
+
+**ISP (Interface Segregation)**
+- `Playable`, `Rateable`, and `Validatable` are small, focused interfaces for specific behavior.
+
+**DIP (Dependency Inversion)**
+- Services depend on `CrudRepository` abstractions (interfaces), not concrete repository implementations.
+
+## 4) Advanced OOP Features (Where Used)
+- **Generics**: `CrudRepository<T, ID>` and `InMemoryRepository<T, ID>` provide generic CRUD operations.
+- **Lambdas**: Sorting and filtering use lambda expressions in service layer.
+- **Reflection**: `ReflectionUtils` inspects class metadata for demonstration.
+- **Interface default/static methods**: `Rateable.isTopRated()` and `Playable.supportsOffline()`.
+
+## 5) Database Schema (PostgreSQL)
+Schema and sample inserts are defined in:
+- `src/main/resources/schema.sql`
+
+**Tables**:
 - `movies`
 - `series`
 - `episodes` (FK → `series.id`)
@@ -48,50 +83,58 @@ Rateable            Rateable
 - Foreign key + `ON DELETE CASCADE`
 - CHECK constraints for ratings, durations, and release years
 
-Sample inserts are included in the schema file.
+## 6) Controller + Service + Repository Responsibilities
+**Controller Layer**
+- Handles simple input orchestration.
+- Delegates operations to services.
 
-## D. Controller (CRUD summary)
-The `MediaController` demonstrates CRUD flows through services:
-- `MovieService.create`, `getById`, `getAll`, `update`, `delete`
-- `SeriesService.create`, `getById`, `getAll`, `update`, `delete`
-- `EpisodeService.create`, `getById`, `getBySeriesId`, `update`, `delete`
+**Service Layer**
+- Validates entities, applies business rules.
+- Uses repository interface (DIP) and lambdas.
 
-**Example flow (from `MediaController.demoCrudFlow`)**:
-1. Create a movie
-2. Create a series
-3. Create an episode for the series
-4. Show polymorphism with `MediaContent` list
+**Repository Layer**
+- Generic CRUD interface and in-memory implementation.
+- Ready for JDBC repository implementations.
 
-## E. Instructions to Compile and Run
-1. **Create the database**:
-   ```bash
-   createdb moviestream
-   psql -d moviestream -f src/main/resources/schema.sql
-   ```
+## 7) Demonstration & Output Expectations
+The `MediaController.demoCrudFlow()` demonstrates:
+- Creating multiple entities
+- Updating entities
+- Deleting entities
+- Validation + exceptions
+- Polymorphism using a `MediaContent` list
+- Reflection utility output
+- Lambda sorting utilities
 
-2. **Compile**:
-   ```bash
-   javac -d out $(find src/main/java -name "*.java")
-   ```
+## 8) Execution Instructions
+**Compile**:
+```bash
+javac -d out $(find src/main/java -name "*.java")
+```
 
-3. **Run**:
-   ```bash
-   DB_URL=jdbc:postgresql://localhost:5432/moviestream \
-   DB_USER=postgres DB_PASSWORD=postgres \
-   java -cp out com.assignment3.Main
-   ```
+**Run**:
+```bash
+java -cp out com.assignment3.Main
+```
 
-## F. Screenshots
-Include screenshots in your submission that show:
+## 9) Screenshots Checklist
+Include screenshots in your submission showing:
 - Successful CRUD operations
-- Error handling (e.g., invalid input)
+- Validation failures
+- Reflection output
+- Sorted lists using lambdas
 
-## G. Reflection
+## 10) Reflection
 **What I learned**:
-- How to structure a layered Java project with JDBC and exceptions.
+- Applying SOLID in layered Java applications with clean boundaries.
+- Using generics and lambdas to build reusable utilities.
 
 **Challenges**:
-- Designing validation rules that match both business rules and database constraints.
+- Balancing validation rules across service and repository layers.
 
-**Benefits of JDBC and multilayer design**:
-- Clear separation of concerns and easier testing/maintenance.
+**Value of SOLID architecture**:
+- Easier testing, extensibility, and maintainability.
+
+## 11) GitHub Workflow Reminder
+- Push the repo to GitHub and ensure it is **public** for submission.
+- Paste the GitHub URL in Moodle as the official submission.
