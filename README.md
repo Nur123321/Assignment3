@@ -1,7 +1,7 @@
 # Movie Streaming Platform — Assignment 4 (SOLID + Advanced OOP)
 
 ## 1) Project Overview
-This project implements a **Movie Streaming Platform** API in Java using a layered architecture (controller → service → repository → data) and demonstrates SOLID principles, advanced OOP features, and JDBC-ready schema design. The domain includes movies, series, and episodes with composition and CRUD workflows.
+This project implements a **Movie Streaming Platform** backend in Java using a layered architecture (controller → service → repository → data) and demonstrates SOLID principles, advanced OOP features, and JDBC-ready schema design. The domain includes movies, series, and episodes with composition and CRUD workflows. The current implementation is a console-driven controller that exercises the services and repositories; the database schema is provided for JDBC integration. 
 
 **Entities**:
 - `MediaContent` (abstract base class)
@@ -46,7 +46,7 @@ src/main/java/com/assignment3
     └── SortingUtils.java
 ```
 
-## 3) SOLID Documentation
+## 3) SOLID & OOP Summary
 **SRP (Single Responsibility)**
 - Controller handles I/O + orchestration only; services handle validation and business rules; repositories handle storage.
 
@@ -62,13 +62,58 @@ src/main/java/com/assignment3
 **DIP (Dependency Inversion)**
 - Services depend on `CrudRepository` abstractions (interfaces), not concrete repository implementations.
 
-## 4) Advanced OOP Features (Where Used)
+**Advanced OOP Features**
 - **Generics**: `CrudRepository<T, ID>` and `InMemoryRepository<T, ID>` provide generic CRUD operations.
 - **Lambdas**: Sorting and filtering use lambda expressions in service layer.
 - **Reflection**: `ReflectionUtils` inspects class metadata for demonstration.
 - **Interface default/static methods**: `Rateable.isTopRated()` and `Playable.supportsOffline()`.
 
-## 5) Database Schema (PostgreSQL)
+## 4) Component Principles (REP/CCP/CRP)
+- **REP (Reuse/Release Equivalence Principle)**: Reusable modules are grouped by domain layer (controller, service, repository, utils). The repository abstractions and utilities can be released as independent modules.
+- **CCP (Common Closure Principle)**: Classes that change together (e.g., repository interfaces and implementations) are colocated to reduce change ripple.
+- **CRP (Common Reuse Principle)**: Consumers can depend on `service` or `repository/interfaces` without inheriting unused concrete implementations.
+
+## 5) Design Patterns Section
+Required patterns are mapped to current implementation status:
+- **Singleton**: *Planned*. A singleton is appropriate for `DatabaseConnection` when the JDBC layer is wired (single shared configuration/connection factory).
+- **Factory**: *Planned*. A factory is suitable for producing `MediaContent` subtypes (`Movie`, `Series`, `Episode`) based on user input or payload type.
+- **Builder**: *Planned*. A builder would simplify constructing complex `MediaContent` objects with optional fields (e.g., episode metadata).
+
+## 6) REST API Documentation (Planned Spring Boot Migration)
+The current build is console-driven; the next step is to expose REST endpoints via Spring Boot. Below is the intended API contract:
+
+**Base URL**: `/api`
+
+**Movies**
+- `GET /api/movies` → list movies
+- `POST /api/movies` → create movie
+- `PUT /api/movies/{id}` → update movie
+- `DELETE /api/movies/{id}` → delete movie
+
+**Series**
+- `GET /api/series`
+- `POST /api/series`
+- `PUT /api/series/{id}`
+- `DELETE /api/series/{id}`
+
+**Episodes**
+- `GET /api/series/{seriesId}/episodes`
+- `POST /api/series/{seriesId}/episodes`
+- `PUT /api/series/{seriesId}/episodes/{episodeId}`
+- `DELETE /api/series/{seriesId}/episodes/{episodeId}`
+
+**Sample JSON (Movie)**
+```json
+{
+  "title": "Interstellar",
+  "releaseYear": 2014,
+  "rating": 8.6,
+  "durationMinutes": 169,
+  "director": "Christopher Nolan"
+}
+```
+
+## 7) Database Schema (PostgreSQL)
 Schema and sample inserts are defined in:
 - `src/main/resources/schema.sql`
 
@@ -83,7 +128,7 @@ Schema and sample inserts are defined in:
 - Foreign key + `ON DELETE CASCADE`
 - CHECK constraints for ratings, durations, and release years
 
-## 6) Controller + Service + Repository Responsibilities
+## 8) Controller + Service + Repository Responsibilities
 **Controller Layer**
 - Handles simple input orchestration.
 - Delegates operations to services.
@@ -96,7 +141,7 @@ Schema and sample inserts are defined in:
 - Generic CRUD interface and in-memory implementation.
 - Ready for JDBC repository implementations.
 
-## 7) Demonstration & Output Expectations
+## 9) Demonstration & Output Expectations
 The `MediaController.demoCrudFlow()` demonstrates:
 - Creating multiple entities
 - Updating entities
@@ -106,7 +151,45 @@ The `MediaController.demoCrudFlow()` demonstrates:
 - Reflection utility output
 - Lambda sorting utilities
 
-## 8) Execution Instructions
+## 10) System Architecture Diagram
+```mermaid
+flowchart LR
+  User[User / CLI] --> Controller[MediaController]
+  Controller --> Service[Service Layer]
+  Service --> Repo[Repository Interfaces]
+  Repo --> InMem[InMemoryRepository]
+  Repo --> DB[(JDBC/Database - Planned)]
+```
+
+## 11) UML (Class Relationships)
+```mermaid
+classDiagram
+  class MediaContent {
+    <<abstract>>
+    +id
+    +title
+    +releaseYear
+    +rating
+  }
+  class Movie {
+    +durationMinutes
+    +director
+  }
+  class Series {
+    +seasons
+  }
+  class Episode {
+    +seasonNumber
+    +episodeNumber
+    +durationMinutes
+  }
+  MediaContent <|-- Movie
+  MediaContent <|-- Series
+  MediaContent <|-- Episode
+  Series "1" o-- "many" Episode : contains
+```
+
+## 12) Execution Instructions
 **Compile**:
 ```bash
 javac -d out $(find src/main/java -name "*.java")
@@ -117,14 +200,14 @@ javac -d out $(find src/main/java -name "*.java")
 java -cp out com.assignment3.Main
 ```
 
-## 9) Screenshots Checklist
+## 13) Screenshots Checklist
 Include screenshots in your submission showing:
 - Successful CRUD operations
 - Validation failures
 - Reflection output
 - Sorted lists using lambdas
 
-## 10) Reflection
+## 14) Reflection
 **What I learned**:
 - Applying SOLID in layered Java applications with clean boundaries.
 - Using generics and lambdas to build reusable utilities.
@@ -135,6 +218,6 @@ Include screenshots in your submission showing:
 **Value of SOLID architecture**:
 - Easier testing, extensibility, and maintainability.
 
-## 11) GitHub Workflow Reminder
+## 15) GitHub Workflow Reminder
 - Push the repo to GitHub and ensure it is **public** for submission.
 - Paste the GitHub URL in Moodle as the official submission.
