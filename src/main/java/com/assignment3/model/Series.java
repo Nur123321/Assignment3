@@ -13,6 +13,10 @@ public class Series extends MediaContent {
         this.seasons = seasons;
     }
 
+    public static Builder builder(int id, String title, String genre, int releaseYear, int seasons) {
+        return new Builder(id, title, genre, releaseYear, seasons);
+    }
+
     public List<Episode> getEpisodes() {
         return Collections.unmodifiableList(episodes);
     }
@@ -37,5 +41,31 @@ public class Series extends MediaContent {
     @Override
     public String getSummary() {
         return getTitle() + " (" + seasons + " seasons, " + episodes.size() + " episodes)";
+    }
+
+    public static class Builder {
+        private final int id;
+        private final String title;
+        private final String genre;
+        private final int releaseYear;
+        private final int seasons;
+        private double rating = 0.0;
+
+        private Builder(int id, String title, String genre, int releaseYear, int seasons) {
+            this.id = id;
+            this.title = title;
+            this.genre = genre;
+            this.releaseYear = releaseYear;
+            this.seasons = seasons;
+        }
+
+        public Builder rating(double rating) {
+            this.rating = rating;
+            return this;
+        }
+
+        public Series build() {
+            return new Series(id, title, genre, releaseYear, rating, seasons);
+        }
     }
 }
