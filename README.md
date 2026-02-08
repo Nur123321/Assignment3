@@ -23,6 +23,8 @@ src/main/java/com/assignment3
 │   ├── DuplicateResourceException.java
 │   ├── InvalidInputException.java
 │   └── ResourceNotFoundException.java
+├── factory/
+│   └── MediaContentFactory.java
 ├── interfaces/
 │   ├── Playable.java
 │   ├── Rateable.java
@@ -74,13 +76,13 @@ src/main/java/com/assignment3
 - **CRP (Common Reuse Principle)**: Consumers can depend on `service` or `repository/interfaces` without inheriting unused concrete implementations.
 
 ## 5) Design Patterns Section
-Required patterns are mapped to current implementation status:
-- **Singleton**: *Planned*. A singleton is appropriate for `DatabaseConnection` when the JDBC layer is wired (single shared configuration/connection factory).
-- **Factory**: *Planned*. A factory is suitable for producing `MediaContent` subtypes (`Movie`, `Series`, `Episode`) based on user input or payload type.
-- **Builder**: *Planned*. A builder would simplify constructing complex `MediaContent` objects with optional fields (e.g., episode metadata).
+Implemented patterns and where they appear:
+- **Singleton**: `DatabaseConnection` is a singleton with `initialize(...)` and `getInstance()` to enforce a shared JDBC configuration provider.
+- **Factory**: `MediaContentFactory` creates `Movie`, `Series`, and `Episode` instances to centralize instantiation logic.
+- **Builder**: `Movie.Builder`, `Series.Builder`, and `Episode.Builder` provide fluent construction with optional fields.
 
 ## 6) REST API Documentation (Planned Spring Boot Migration)
-The current build is console-driven; the next step is to expose REST endpoints via Spring Boot. Below is the intended API contract:
+The current build is console-driven; the next step is to expose REST endpoints via Spring Boot. Below is the intended API contract that matches the existing services and repositories:
 
 **Base URL**: `/api`
 
