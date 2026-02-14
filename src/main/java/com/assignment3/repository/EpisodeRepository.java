@@ -2,6 +2,7 @@ package com.assignment3.repository;
 
 import com.assignment3.exception.DatabaseOperationException;
 import com.assignment3.model.Episode;
+import com.assignment3.repository.cache.CacheManager;
 import com.assignment3.util.DatabaseConnection;
 
 import java.sql.Connection;
@@ -13,10 +14,13 @@ import java.util.List;
 import java.util.Optional;
 
 public class EpisodeRepository {
+    private static final String CACHE_PREFIX = "episode:";
     private final DatabaseConnection databaseConnection;
+    private final CacheManager cacheManager;
 
     public EpisodeRepository(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
+        this.cacheManager = CacheManager.getInstance();
     }
 
     public void create(Episode episode) {
@@ -33,19 +37,28 @@ public class EpisodeRepository {
             statement.setInt(7, episode.getEpisodeNumber());
             statement.setInt(8, episode.getDurationMinutes());
             statement.executeUpdate();
+            invalidateEpisodeCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to create episode", exception);
         }
     }
 
     public Optional<Episode> getById(int id) {
+        String cacheKey = CACHE_PREFIX + "id:" + id;
+        Optional<Episode> cachedEpisode = cacheManager.get(cacheKey, Episode.class);
+        if (cachedEpisode.isPresent()) {
+            return cachedEpisode;
+        }
+
         String sql = "SELECT * FROM episodes WHERE id = ?";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return Optional.of(mapRow(resultSet));
+                    Episode episode = mapRow(resultSet);
+                    cacheManager.put(cacheKey, episode);
+                    return Optional.of(episode);
                 }
                 return Optional.empty();
             }
@@ -55,6 +68,12 @@ public class EpisodeRepository {
     }
 
     public List<Episode> getBySeriesId(int seriesId) {
+        String cacheKey = CACHE_PREFIX + "series:" + seriesId;
+        Optional<List<Episode>> cachedEpisodes = cacheManager.getList(cacheKey, Episode.class);
+        if (cachedEpisodes.isPresent()) {
+            return new ArrayList<>(cachedEpisodes.get());
+        }
+
         String sql = "SELECT * FROM episodes WHERE series_id = ? ORDER BY season_number, episode_number";
         List<Episode> episodes = new ArrayList<>();
         try (Connection connection = databaseConnection.getConnection();
@@ -68,10 +87,17 @@ public class EpisodeRepository {
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to fetch episodes", exception);
         }
+        cacheManager.put(cacheKey, new ArrayList<>(episodes));
         return episodes;
     }
 
     public List<Episode> getAll() {
+        String cacheKey = CACHE_PREFIX + "all";
+        Optional<List<Episode>> cachedEpisodes = cacheManager.getList(cacheKey, Episode.class);
+        if (cachedEpisodes.isPresent()) {
+            return new ArrayList<>(cachedEpisodes.get());
+        }
+
         String sql = "SELECT * FROM episodes";
         List<Episode> episodes = new ArrayList<>();
         try (Connection connection = databaseConnection.getConnection();
@@ -83,6 +109,7 @@ public class EpisodeRepository {
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to fetch episodes", exception);
         }
+        cacheManager.put(cacheKey, new ArrayList<>(episodes));
         return episodes;
     }
 
@@ -101,6 +128,7 @@ public class EpisodeRepository {
             statement.setInt(8, episode.getDurationMinutes());
             statement.setInt(9, id);
             statement.executeUpdate();
+            invalidateEpisodeCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to update episode", exception);
         }
@@ -112,9 +140,14 @@ public class EpisodeRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.executeUpdate();
+            invalidateEpisodeCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to delete episode", exception);
         }
+    }
+
+    private void invalidateEpisodeCache() {
+        cacheManager.evictByPrefix(CACHE_PREFIX);
     }
 
     private Episode mapRow(ResultSet resultSet) throws SQLException {

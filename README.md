@@ -223,3 +223,13 @@ Include screenshots in your submission showing:
 ## 15) GitHub Workflow Reminder
 - Push the repo to GitHub and ensure it is **public** for submission.
 - Paste the GitHub URL in Moodle as the official submission.
+
+
+## 16) Bonus Task — Repository Caching Layer
+- Implemented a simple in-memory cache singleton: `repository/cache/CacheManager`.
+- Caching added for frequent read methods in repositories:
+  - `MovieRepository`: `getById`, `getByTitle`, `getAll`
+  - `SeriesRepository`: `getById`, `getByTitle`, `getAll`
+  - `EpisodeRepository`: `getById`, `getBySeriesId`, `getAll`
+- Cache invalidation is automatic after every `create`, `update`, and `delete` operation in each repository using namespace prefix eviction.
+- Cache storage uses a `ConcurrentHashMap` and does not break layered architecture (cache remains inside repository layer).
