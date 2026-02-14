@@ -2,6 +2,7 @@ package com.assignment3.repository;
 
 import com.assignment3.exception.DatabaseOperationException;
 import com.assignment3.model.Movie;
+import com.assignment3.repository.cache.CacheManager;
 import com.assignment3.util.DatabaseConnection;
 
 import java.sql.Connection;
@@ -13,10 +14,13 @@ import java.util.List;
 import java.util.Optional;
 
 public class MovieRepository {
+    private static final String CACHE_PREFIX = "movie:";
     private final DatabaseConnection databaseConnection;
+    private final CacheManager cacheManager;
 
     public MovieRepository(DatabaseConnection databaseConnection) {
         this.databaseConnection = databaseConnection;
+        this.cacheManager = CacheManager.getInstance();
     }
 
     public void create(Movie movie) {
@@ -31,19 +35,29 @@ public class MovieRepository {
             statement.setInt(5, movie.getDurationMinutes());
             statement.setString(6, movie.getDirector());
             statement.executeUpdate();
+            invalidateMovieCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to create movie", exception);
         }
     }
 
     public Optional<Movie> getById(int id) {
+        String cacheKey = CACHE_PREFIX + "id:" + id;
+        Optional<Movie> cachedMovie = cacheManager.get(cacheKey, Movie.class);
+        if (cachedMovie.isPresent()) {
+            return cachedMovie;
+        }
+
         String sql = "SELECT * FROM movies WHERE id = ?";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return Optional.of(mapRow(resultSet));
+                    Movie movie = mapRow(resultSet);
+                    cacheManager.put(cacheKey, movie);
+                    cacheManager.put(CACHE_PREFIX + "title:" + movie.getTitle(), movie);
+                    return Optional.of(movie);
                 }
                 return Optional.empty();
             }
@@ -53,13 +67,22 @@ public class MovieRepository {
     }
 
     public Optional<Movie> getByTitle(String title) {
+        String cacheKey = CACHE_PREFIX + "title:" + title;
+        Optional<Movie> cachedMovie = cacheManager.get(cacheKey, Movie.class);
+        if (cachedMovie.isPresent()) {
+            return cachedMovie;
+        }
+
         String sql = "SELECT * FROM movies WHERE title = ?";
         try (Connection connection = databaseConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, title);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return Optional.of(mapRow(resultSet));
+                    Movie movie = mapRow(resultSet);
+                    cacheManager.put(cacheKey, movie);
+                    cacheManager.put(CACHE_PREFIX + "id:" + movie.getId(), movie);
+                    return Optional.of(movie);
                 }
                 return Optional.empty();
             }
@@ -69,6 +92,12 @@ public class MovieRepository {
     }
 
     public List<Movie> getAll() {
+        String cacheKey = CACHE_PREFIX + "all";
+        Optional<List<Movie>> cachedMovies = cacheManager.getList(cacheKey, Movie.class);
+        if (cachedMovies.isPresent()) {
+            return new ArrayList<>(cachedMovies.get());
+        }
+
         String sql = "SELECT * FROM movies";
         List<Movie> movies = new ArrayList<>();
         try (Connection connection = databaseConnection.getConnection();
@@ -80,6 +109,7 @@ public class MovieRepository {
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to fetch movies", exception);
         }
+        cacheManager.put(cacheKey, new ArrayList<>(movies));
         return movies;
     }
 
@@ -96,6 +126,7 @@ public class MovieRepository {
             statement.setString(6, movie.getDirector());
             statement.setInt(7, id);
             statement.executeUpdate();
+            invalidateMovieCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to update movie", exception);
         }
@@ -107,9 +138,14 @@ public class MovieRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
             statement.executeUpdate();
+            invalidateMovieCache();
         } catch (SQLException exception) {
             throw new DatabaseOperationException("Failed to delete movie", exception);
         }
+    }
+
+    private void invalidateMovieCache() {
+        cacheManager.evictByPrefix(CACHE_PREFIX);
     }
 
     private Movie mapRow(ResultSet resultSet) throws SQLException {
